@@ -101,7 +101,8 @@ class AiRepository @Inject constructor(
                         val request = applyAuth(Request.Builder().url(url).get(), provider, settings).build()
                         client.newCall(request).execute().use { response ->
                             if (!response.isSuccessful) {
-                                "HTTP ${response.code} · ${response.message} (Basic auth не помог)"
+                                "HTTP ${response.code} · пароль не подошёл. Логин всегда 'opencode'; " +
+                                    "перевведите пароль из ~/.config/opencode/service.json на ПК"
                             } else {
                                 val count = loadOpenCodeModels(provider, settings).size
                                 "OK · HTTP ${response.code} · моделей: $count"
@@ -196,7 +197,8 @@ class AiRepository @Inject constructor(
         if (provider.kind == ProviderKind.OPENCODE) {
             if (settings.providers[provider.id]?.hasAuthPassword == true) {
                 val pass = keys.getKey("auth_${provider.id}")
-                val user = settings.providers[provider.id]?.authUser?.ifBlank { "opencode" } ?: "opencode"
+                // Desktop-сервис OpenCode всегда использует логин "opencode".
+                val user = "opencode"
                 val token = Base64.encodeToString("$user:$pass".toByteArray(), Base64.NO_WRAP)
                 builder.header("Authorization", "Basic $token")
             }
