@@ -21,14 +21,14 @@ data class Palette(
 private fun c(hex: String) = Color(android.graphics.Color.parseColor(hex))
 
 val DARK_PALETTES = listOf(
-    Palette("dark_obsidian", "Обсидиан", "Бизнес", c("#FF050505"), c("#FF111214"), c("#FF1C1C1E"), c("#14FFFFFF"), c("#FFF5F5F7"), c("#FF8E8E93"), c("#FFE5E5EA"), c("#FFC8A96A"), c("#FF30D158"), c("#FFFF453A")),
-    Palette("dark_graphite", "Графит", "Бизнес", c("#FF0A0A0C"), c("#FF16181B"), c("#FF222428"), c("#16FFFFFF"), c("#FFF2F3F5"), c("#FF90939A"), c("#FFDDE0E6"), c("#FFA8AAB0"), c("#FF34C77B"), c("#FFF0544D")),
-    Palette("dark_slate", "Сланец", "Бизнес", c("#FF080B0F"), c("#FF121820"), c("#FF1B242E"), c("#14FFFFFF"), c("#FFEFF3F7"), c("#FF8C97A3"), c("#FFDCE6F0"), c("#FF7FB3D5"), c("#FF3ECB8F"), c("#FFFF5B5B")),
-    Palette("dark_charcoal", "Уголь", "Бизнес", c("#FF101010"), c("#FF1B1B1B"), c("#FF262626"), c("#18FFFFFF"), c("#FFF7F6F3"), c("#FF9A9892"), c("#FFF0EDE6"), c("#FFCBB995"), c("#FF4ACF86"), c("#FFFF6B6B")),
-    Palette("dark_lavender", "Лаванда", "Пастель", c("#FF100E16"), c("#FF1B1826"), c("#FF272134"), c("#18FFFFFF"), c("#FFF4F0FA"), c("#FFA69EB5"), c("#FFDCCBFF"), c("#FFB9A2E8"), c("#FF6BD4A8"), c("#FFFF8FA0")),
-    Palette("dark_teal", "Глубокий тил", "Пастель", c("#FF08110F"), c("#FF101D1A"), c("#FF182A25"), c("#14FFFFFF"), c("#FFEEF7F3"), c("#FF8EAAA0"), c("#FFC8EBDC"), c("#FF85C7AE"), c("#FF55D6A0"), c("#FFFF8C8C")),
-    Palette("dark_rose", "Розовый дым", "Пастель", c("#FF120D10"), c("#FF20161B"), c("#FF2D2027"), c("#16FFFFFF"), c("#FFF8F0F3"), c("#FFAE95A1"), c("#FFF3D3DE"), c("#FFE0A6BC"), c("#FF63D3A6"), c("#FFFF8A9B")),
-    Palette("dark_sand", "Песок", "Пастель", c("#FF12100C"), c("#FF1F1A14"), c("#FF2C251C"), c("#16FFFFFF"), c("#FFF8F4EC"), c("#FFAC9F8B"), c("#FFEFDFC4"), c("#FFD9BC8E"), c("#FF77CE9C"), c("#FFFF9A87")),
+    Palette("dark_obsidian", "Обсидиан", "Бизнес", c("#FF050505"), c("#FF111214"), c("#FF1C1C1E"), c("#14FFFFFF"), c("#FFF5F5F7"), c("#FFB0B2B8"), c("#FFE5E5EA"), c("#FFC8A96A"), c("#FF30D158"), c("#FFFF453A")),
+    Palette("dark_graphite", "Графит", "Бизнес", c("#FF0A0A0C"), c("#FF16181B"), c("#FF222428"), c("#16FFFFFF"), c("#FFF2F3F5"), c("#FFB3B6BD"), c("#FFDDE0E6"), c("#FFA8AAB0"), c("#FF34C77B"), c("#FFF0544D")),
+    Palette("dark_slate", "Сланец", "Бизнес", c("#FF080B0F"), c("#FF121820"), c("#FF1B242E"), c("#14FFFFFF"), c("#FFEFF3F7"), c("#FFAFBAC6"), c("#FFDCE6F0"), c("#FF7FB3D5"), c("#FF3ECB8F"), c("#FFFF5B5B")),
+    Palette("dark_charcoal", "Уголь", "Бизнес", c("#FF101010"), c("#FF1B1B1B"), c("#FF262626"), c("#18FFFFFF"), c("#FFF7F6F3"), c("#FFBCB9B1"), c("#FFF0EDE6"), c("#FFCBB995"), c("#FF4ACF86"), c("#FFFF6B6B")),
+    Palette("dark_lavender", "Лаванда", "Пастель", c("#FF100E16"), c("#FF1B1826"), c("#FF272134"), c("#18FFFFFF"), c("#FFF4F0FA"), c("#FFC4BCD3"), c("#FFDCCBFF"), c("#FFB9A2E8"), c("#FF6BD4A8"), c("#FFFF8FA0")),
+    Palette("dark_teal", "Глубокий тил", "Пастель", c("#FF08110F"), c("#FF101D1A"), c("#FF182A25"), c("#14FFFFFF"), c("#FFEEF7F3"), c("#FFB2CCC3"), c("#FFC8EBDC"), c("#FF85C7AE"), c("#FF55D6A0"), c("#FFFF8C8C")),
+    Palette("dark_rose", "Розовый дым", "Пастель", c("#FF120D10"), c("#FF20161B"), c("#FF2D2027"), c("#16FFFFFF"), c("#FFF8F0F3"), c("#FFCFBAC4"), c("#FFF3D3DE"), c("#FFE0A6BC"), c("#FF63D3A6"), c("#FFFF8A9B")),
+    Palette("dark_sand", "Песок", "Пастель", c("#FF12100C"), c("#FF1F1A14"), c("#FF2C251C"), c("#16FFFFFF"), c("#FFF8F4EC"), c("#FFCFC2AE"), c("#FFEFDFC4"), c("#FFD9BC8E"), c("#FF77CE9C"), c("#FFFF9A87")),
 )
 
 val LIGHT_PALETTES = listOf(

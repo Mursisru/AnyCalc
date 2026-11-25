@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -27,9 +28,12 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -77,14 +81,31 @@ fun HistoryRoute(onBack: () -> Unit, viewModel: HistoryViewModel = hiltViewModel
         if (items.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("◇", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.outline)
+                    androidx.compose.material3.Icon(
+                        painter = androidx.compose.ui.res.painterResource(com.mursis.anycalc.R.drawable.ic_history),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(48.dp).alpha(0.5f),
+                    )
                     Spacer(Modifier.height(10.dp))
                     Text("Здесь появятся решенные задачи", style = MaterialTheme.typography.bodySmall)
                 }
             }
         } else {
-            com.mursis.anycalc.ui.components.ScrollEdgeFade(modifier = Modifier.fillMaxSize()) {
+            val listState = rememberLazyListState()
+            val canUp by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 } }
+            val canDown by remember {
+                derivedStateOf {
+                    listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index?.let { it < listState.layoutInfo.totalItemsCount - 1 } ?: false
+                }
+            }
+            com.mursis.anycalc.ui.components.ScrollEdgeFade(
+                modifier = Modifier.fillMaxSize(),
+                canScrollUp = canUp,
+                canScrollDown = canDown,
+            ) {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp, 0.dp, 20.dp, 24.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
