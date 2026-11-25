@@ -1,0 +1,85 @@
+# AnyCalc
+
+Android-приложение «Google Translate для задач»: камера распознаёт условие задачи, поверх него появляется короткий ответ, по тапу открывается пошаговое решение.
+
+## Возможности
+
+- **Live-режим** — CameraX Preview + ImageAnalysis, on-device OCR ML Kit Text Recognition v2 с bounding boxes, debounce 550 мс и `STRATEGY_KEEP_ONLY_LATEST`.
+- **Оверлей** — тонкие скруглённые рамки вокруг распознанного текста и «плавающая» стеклянная капсула с ответом.
+- **BottomSheet** — короткий ответ, пошаговое решение, метки провайдера/источника/уверенности, редактор системного промпта, пересчёт, сохранение.
+- **Гибридный калькулятор** — арифметика, функции, квадратные уравнения, проценты и базовые формулы физики считаются локально, без сети и ключей.
+- **ИИ-провайдеры** — OpenCode Server (сессии: `POST /api/session`, `POST /session/{id}/prompt`, `GET /session/{id}/message`) и OpenAI-совместимые API (Gemini, Groq, OpenRouter, DeepSeek, Custom). Приоритет меняется drag-and-drop, есть проверка подключения и автоматический переход к резервному провайдеру.
+- **Безопасность** — ключи в `EncryptedSharedPreferences`, мастер-ключ в Android Keystore.
+- **Хранение** — Room (история, поиск, swipe-удаление) и DataStore (настройки, промпт, приоритеты).
+- **Дизайн** — business-black (#050505 / #111214 / #1C1C1E), platinum-акцент, champagne для премиальных деталей, скругления 20–28 dp, пружинные анимации 200–350 мс, поддержка Reduce Motion и тактильной отдачи.
+- **Ручной ввод** — fallback, если камера недоступна или модель OCR ещё не загружена.
+
+## Сборка
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Android\openjdk\jdk-21.0.8"
+.\gradlew.bat testDebugUnitTest assembleDebug assembleRelease
+```
+
+APK:
+- debug — `app/build/outputs/apk/debug/app-debug.apk`
+- release (подписан) — `app/build/outputs/apk/release/app-release.apk`
+
+Ключ для release-сборки: `%USERPROFILE%\.android\anycalc-release.jks`, параметры в `keystore.properties` (файл в `.gitignore`). Пароль keystore: `anycalc2026`.
+
+## Распознавание текста и локальные вычисления
+
+- Цепочка OCR для фото/галереи: **Tesseract (eng+rus, LSTM)** → **ML Kit Text Recognition** → **AI-vision через выбранного провайдера** (NVIDIA NIM, Gemini, OpenRouter, OpenCode с вложением `data:`).
+- Режим выбирается в «Настройки → Распознавание текста (OCR)»: `AUTO`, `TESSERACT`, `MLKIT`, `AI`.
+- Live-камера использует ML Kit с debounce и кэшем; по тапу на капсулу открывается решение.
+- Кнопка «Локально» на панели камеры запускает расширенный калькулятор **без сети и провайдеров**: арифметика, функции, квадратные уравнения, системы 2×2, проценты, производные и интегралы многочленов, перевод единиц, физические формулы и текстовые задачи про скорость/время.
+- Кнопки «Фото» (CameraX ImageCapture) и «Галерея» (Android Photo Picker) распознают выбранное изображение и запускают решение.
+
+## OpenCode Server
+
+- URL по умолчанию: `http://127.0.0.1:28894` (сервер OpenCode Desktop). Поддерживается Basic auth: логин `opencode`, пароль вводится один раз в Настройках и хранится в Keystore.
+- «Проверить подключение» обращается к `/api/session`, а список моделей грузится из `/api/model` кнопкой «Обновить список моделей OpenCode».
+- Для эмулятора: `adb reverse tcp:28894 tcp:28894`, т.к. сервер слушает только loopback хоста.
+- Промпт отправляется в формате, совместимом со старым и новым API: `{"text":..., "prompt":{"text":...}}`.
+
+## Провайдер NVIDIA
+
+`https://integrate.api.nvidia.com/v1`, ключ — с [build.nvidia.com](https://build.nvidia.com/). Текстовая модель по умолчанию `nvidia/nemotron-3.5-lightning-30b-a3b`, vision-модель для OCR — `nvidia/nemotron-3.5-super-vl-120b-a12b`. Обе переопределяются в Настройках.
+
+## Первый запуск
+
+1. Пройдите онбординг.
+2. Разрешите камеру. При первом запуске ML Kit загрузит модель OCR через Google Play services (нужен интернет).
+3. Для ИИ откройте «Настройки» → введите ключ и проверьте подключение. Для эмулятора OpenCode Server уже настроен на `http://10.0.2.2:4096` (сервер должен быть запущен на хосте с `opencode serve`).
+4. Без ключей и сервера приложение всё равно решает простые задачи локально.
+
+### Подключение к OpenCode Server из эмулятора
+
+По умолчанию используется `http://10.0.2.2:4096`. Если Windows Firewall блокирует входящие подключения из эмулятора, пробросьте порт через adb и укажите `http://127.0.0.1:4096` в настройках провайдера:
+
+```powershell
+adb reverse tcp:4096 tcp:4096
+```
+
+Сервер нужно поднимать с `opencode serve --port 4096 --hostname 0.0.0.0`. Адаптер отправляет промпт в формате, совместимом и со старым API (`text`), и с новым (`prompt: {text}`).
+
+## Архитектура
+
+```
+ui/          Compose-экраны (camera, solution, history, settings, onboarding) и дизайн-система
+camera/      OcrEngine (ML Kit) + TaskAnalyzer (debounce, hash-кэш)
+ai/          AiRepository — OpenCode и OpenAI-совместимые провайдеры, fallback, парсинг JSON
+calc/        LocalCalculator — безопасный парсер выражений, уравнения, физика
+data/        Room, DataStore, EncryptedSharedPreferences
+di/          Hilt-модуль
+```
+
+MVVM + Coroutines/Flow + Hilt. Ответ ИИ ожидается в формате `{"short": "...", "detailed": "...", "confidence": 0.0}`.
+
+## Проверенная связка
+
+AGP 9.5.2 · Gradle 9.9.2 (wrapper 9.6.0) · Kotlin/Compose plugin 2.4.21 · KSP 2.3.14 · Hilt 2.60.1 · Compose BOM 2026.11.01 · CameraX 1.7.0 · ML Kit text-recognition 16.0.1 · Tesseract (tess-two 9.1.0, `tessdata_fast` eng+rus) · Room 2.8.5 · minSdk 26 · compileSdk 37.2.
+
+Иконки созданы в Figma (`zdUekDOd7pNiaPodpeXfwb`): секция `AnyCalc UI Icons` (13 line-иконок, 24×24, stroke 1.8) и бренд-символ Ghost, использованный как launcher foreground и в онбординге. SVG/pathData экспортированы в `app/src/main/res/drawable/ic_*.xml`.
+
+Тестовые фото: `tests/photos/wikimedia_equations.png` (CC BY-SA 4.0, Vihaanapple, Wikimedia Commons) и `tests/photos/synthetic_task.png` (синтетическое, `2x^2 - 8x + 6 = 0`).
