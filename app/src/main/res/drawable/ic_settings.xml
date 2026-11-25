@@ -3,15 +3,41 @@
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
-    android:viewportHeight="24"
-    android:strokeColor="#E5E5EA"
-    android:strokeWidth="1.8"
-    android:strokeLineCap="round"
-    android:strokeLineJoin="round">
-    <path android:pathData="M4 7 L20 7" />
-    <path android:pathData="M4 12 L20 12" />
-    <path android:pathData="M4 17 L20 17" />
-    <path android:pathData="M9 5 L9 9" />
-    <path android:pathData="M15 10 L15 14" />
-    <path android:pathData="M8 15 L8 19" />
+    android:viewportHeight="24">
+    <path
+        android:pathData="M4 7 L20 7"
+        android:strokeColor="#E5E5EA"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M4 12 L20 12"
+        android:strokeColor="#E5E5EA"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M4 17 L20 17"
+        android:strokeColor="#E5E5EA"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M9 5 L9 9"
+        android:strokeColor="#E5E5EA"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M15 10 L15 14"
+        android:strokeColor="#E5E5EA"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M8 15 L8 19"
+        android:strokeColor="#E5E5EA"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
 </vector>

@@ -1,5 +1,6 @@
 package com.mursis.anycalc.ui.settings
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -32,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -227,11 +229,10 @@ private fun ProviderRow(
                     },
                 contentAlignment = Alignment.Center,
             ) {
-                androidx.compose.material3.Icon(
-                    androidx.compose.ui.res.painterResource(com.mursis.anycalc.R.drawable.ic_settings),
+                Image(
+                    painter = androidx.compose.ui.res.painterResource(com.mursis.anycalc.R.drawable.ic_settings),
                     contentDescription = "Перетащите",
-                    tint = SecondaryText,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(20.dp).alpha(0.7f),
                 )
             }
             Spacer(Modifier.width(12.dp))

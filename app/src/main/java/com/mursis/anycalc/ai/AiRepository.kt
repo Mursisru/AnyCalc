@@ -85,17 +85,30 @@ class AiRepository @Inject constructor(
         withContext(Dispatchers.IO) {
             if (provider.baseUrl.isBlank()) return@withContext "Не задан base URL"
             if (provider.kind == ProviderKind.OPENCODE) {
-                val password = keys.getKey("auth_${provider.id}")
-                if (password.isBlank()) return@withContext "Введите пароль OpenCode Server"
                 val url = provider.baseUrl.trimEnd('/') + "/api/session"
+                val password = keys.getKey("auth_${provider.id}")
                 return@withContext try {
-                    val request = applyAuth(Request.Builder().url(url).get(), provider, settings).build()
-                    client.newCall(request).execute().use { response ->
-                        if (!response.isSuccessful) {
-                            return@withContext "HTTP ${response.code} · ${response.message}"
-                        }
+                    // Сначала пробуем без авторизации: у многих серверов пароль не задан.
+                    val plain = client.newCall(Request.Builder().url(url).get().build()).execute()
+                    val plainOk = plain.isSuccessful
+                    val code = plain.code
+                    val message = plain.message
+                    plain.close()
+                    if (plainOk) {
                         val count = loadOpenCodeModels(provider, settings).size
-                        "OK · HTTP ${response.code} · моделей: $count"
+                        "OK · HTTP $code · моделей: $count"
+                    } else if (password.isNotBlank()) {
+                        val request = applyAuth(Request.Builder().url(url).get(), provider, settings).build()
+                        client.newCall(request).execute().use { response ->
+                            if (!response.isSuccessful) {
+                                "HTTP ${response.code} · ${response.message} (Basic auth не помог)"
+                            } else {
+                                val count = loadOpenCodeModels(provider, settings).size
+                                "OK · HTTP ${response.code} · моделей: $count"
+                            }
+                        }
+                    } else {
+                        "HTTP $code · $message (сервер требует пароль — задайте его в Настройках)"
                     }
                 } catch (e: Exception) {
                     "Ошибка: ${e.message?.take(100).orEmpty()}"

@@ -34,6 +34,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -450,7 +451,7 @@ private fun GlassPill(icon: Int, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(painterResource(icon), contentDescription = "Вспышка", tint = PrimaryText, modifier = Modifier.size(22.dp))
+        Image(painterResource(icon), contentDescription = "Вспышка", modifier = Modifier.size(22.dp))
     }
 }
 
@@ -464,11 +465,12 @@ private fun ControlPill(icon: Int, label: String, active: Boolean, onClick: () -
             .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(
+        Image(
             painter = painterResource(icon),
             contentDescription = label,
-            tint = if (active) Platinum else SecondaryText,
-            modifier = Modifier.size(22.dp),
+            modifier = Modifier
+                .size(22.dp)
+                .alpha(if (active) 1f else 0.75f),
         )
         Spacer(Modifier.height(3.dp))
         Text(label, color = if (active) Platinum else SecondaryText, style = MaterialTheme.typography.labelMedium)

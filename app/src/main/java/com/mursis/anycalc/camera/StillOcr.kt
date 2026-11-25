@@ -32,21 +32,24 @@ class StillOcr @Inject constructor(
     ): StillOcrResult {
         val mode = runCatching { OcrMode.valueOf(settings.ocrMode) }.getOrDefault(OcrMode.AUTO)
         val order = when (mode) {
-            OcrMode.AUTO -> listOf(OcrMode.TESSERACT, OcrMode.MLKIT, OcrMode.AI)
-            OcrMode.TESSERACT -> listOf(OcrMode.TESSERACT, OcrMode.AI)
+            OcrMode.AUTO -> listOf(OcrMode.MLKIT, OcrMode.TESSERACT, OcrMode.AI)
+            OcrMode.TESSERACT -> listOf(OcrMode.TESSERACT, OcrMode.MLKIT, OcrMode.AI)
             OcrMode.MLKIT -> listOf(OcrMode.MLKIT, OcrMode.TESSERACT, OcrMode.AI)
-            OcrMode.AI -> listOf(OcrMode.AI, OcrMode.TESSERACT)
+            OcrMode.AI -> listOf(OcrMode.AI, OcrMode.MLKIT, OcrMode.TESSERACT)
         }
+        var best: StillOcrResult? = null
         for (engine in order) {
             onStatus("OCR: ${engine.name.lowercase()}…")
-            when (engine) {
+            val candidate: StillOcrResult? = when (engine) {
                 OcrMode.TESSERACT -> {
                     val r = tesseract.recognize(bitmap)
-                    if (r.text.length >= 2) return StillOcrResult(r.text, emptyList(), "Tesseract", r.confidence)
+                    if (usable(r.text) && r.confidence >= 0.35f) {
+                        StillOcrResult(r.text.trim(), emptyList(), "Tesseract", r.confidence)
+                    } else null
                 }
                 OcrMode.MLKIT -> {
                     val text = mlKitBitmap(bitmap)
-                    if (text != null && text.text.trim().length >= 2) {
+                    if (text != null && usable(text.text)) {
                         val t = text.text.trim()
                         val w = bitmap.width.coerceAtLeast(1)
                         val h = bitmap.height.coerceAtLeast(1)
@@ -58,18 +61,32 @@ class StillOcr @Inject constructor(
                                 r.bottom / h.toFloat(),
                             )
                         }
-                        return StillOcrResult(t, boxes, "ML Kit", 0.8f)
-                    }
+                        StillOcrResult(t, boxes, "ML Kit", 0.8f)
+                    } else null
                 }
                 OcrMode.AI -> {
                     val r = ai.ocrWithVision(bitmap, settings, onStatus)
-                    if (r.text.length >= 2) return StillOcrResult(r.text, emptyList(), "AI vision", r.confidence)
+                    if (usable(r.text)) StillOcrResult(r.text.trim(), emptyList(), "AI vision", r.confidence) else null
                 }
-                else -> Unit
+                else -> null
             }
+            if (candidate != null && (best == null || score(candidate) > score(best!!))) best = candidate
+            // Хороший локальный результат — не дёргаем сеть/AI зря.
+            if ((engine == OcrMode.MLKIT || engine == OcrMode.TESSERACT) &&
+                candidate != null && candidate.confidence >= 0.7f && candidate.text.any { it.isDigit() }
+            ) break
         }
-        return StillOcrResult("", emptyList(), "—", 0f)
+        return best ?: StillOcrResult("", emptyList(), "—", 0f)
     }
+
+    private fun usable(text: String): Boolean {
+        val t = text.trim()
+        return t.length >= 3 && t.any { it.isLetterOrDigit() } && t.count { it in "!@#$%^&*<>[]{}~`" } <= t.length / 3
+    }
+
+    private fun score(r: StillOcrResult): Float =
+        r.confidence * 2f + minOf(r.text.length, 200).toFloat() / 100f + if (r.text.any { it.isDigit() }) 1f else 0f
+
 
     private suspend fun mlKitBitmap(bitmap: Bitmap): Text? = suspendCancellableCoroutine { cont ->
         mlKit.processBitmap(
