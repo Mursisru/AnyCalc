@@ -32,7 +32,7 @@ class StillOcr @Inject constructor(
     ): StillOcrResult {
         val mode = runCatching { OcrMode.valueOf(settings.ocrMode) }.getOrDefault(OcrMode.AUTO)
         val order = when (mode) {
-            OcrMode.AUTO -> listOf(OcrMode.MLKIT, OcrMode.TESSERACT, OcrMode.AI)
+            OcrMode.AUTO -> listOf(OcrMode.TESSERACT, OcrMode.MLKIT, OcrMode.AI)
             OcrMode.TESSERACT -> listOf(OcrMode.TESSERACT, OcrMode.MLKIT, OcrMode.AI)
             OcrMode.MLKIT -> listOf(OcrMode.MLKIT, OcrMode.TESSERACT, OcrMode.AI)
             OcrMode.AI -> listOf(OcrMode.AI, OcrMode.MLKIT, OcrMode.TESSERACT)
@@ -65,16 +65,16 @@ class StillOcr @Inject constructor(
                     } else null
                 }
                 OcrMode.AI -> {
-                    val r = ai.ocrWithVision(bitmap, settings, onStatus)
-                    if (usable(r.text)) StillOcrResult(r.text.trim(), emptyList(), "AI vision", r.confidence) else null
+                    if (best != null) null else {
+                        val r = ai.ocrWithVision(bitmap, settings, onStatus)
+                        if (usable(r.text)) StillOcrResult(r.text.trim(), emptyList(), "AI vision", r.confidence) else null
+                    }
                 }
                 else -> null
             }
             if (candidate != null && (best == null || score(candidate) > score(best!!))) best = candidate
-            // Хороший локальный результат — не дёргаем сеть/AI зря.
-            if ((engine == OcrMode.MLKIT || engine == OcrMode.TESSERACT) &&
-                candidate != null && candidate.confidence >= 0.7f && candidate.text.any { it.isDigit() }
-            ) break
+            // Tesseract читает печатные формулы лучше ML Kit — в AUTO доверяем ему первым.
+            if (engine == OcrMode.TESSERACT && candidate != null) break
         }
         return best ?: StillOcrResult("", emptyList(), "—", 0f)
     }

@@ -1,5 +1,7 @@
 package com.mursis.anycalc.ui.components
 
+import androidx.compose.material3.MaterialTheme
+
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -38,17 +40,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.mursis.anycalc.ui.theme.Champagne
-import com.mursis.anycalc.ui.theme.Glass
-import com.mursis.anycalc.ui.theme.Graphite
-import com.mursis.anycalc.ui.theme.GraphiteLight
-import com.mursis.anycalc.ui.theme.Hairline
-import com.mursis.anycalc.ui.theme.HairlineStrong
 import com.mursis.anycalc.ui.theme.LocalReduceMotion
-import com.mursis.anycalc.ui.theme.Platinum
-import com.mursis.anycalc.ui.theme.PrimaryText
-import com.mursis.anycalc.ui.theme.SecondaryText
-import com.mursis.anycalc.ui.theme.Success
 
 @Composable
 fun motionMs(value: Int): Int = if (LocalReduceMotion.current) 0 else value
@@ -58,14 +50,14 @@ fun GlassCard(
     modifier: Modifier = Modifier,
     radius: Int = 24,
     padding: Int = 18,
-    tint: Color = Glass,
+    tint: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
         modifier = modifier,
         color = tint,
         shape = RoundedCornerShape(radius.dp),
-        border = BorderStroke(1.dp, Hairline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
         shadowElevation = 0.dp,
     ) {
         Column(modifier = Modifier.padding(padding.dp), content = content)
@@ -89,10 +81,10 @@ fun CapsuleButton(
             modifier = modifier.height(52.dp),
             shape = shape,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Platinum,
-                contentColor = com.mursis.anycalc.ui.theme.BusinessBlack,
-                disabledContainerColor = GraphiteLight,
-                disabledContentColor = SecondaryText,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.background,
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             ),
         ) {
             if (leading != null) {
@@ -107,10 +99,10 @@ fun CapsuleButton(
             enabled = enabled,
             modifier = modifier.height(52.dp),
             shape = shape,
-            border = BorderStroke(1.dp, HairlineStrong),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = PrimaryText,
-                disabledContentColor = SecondaryText,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             ),
         ) {
             if (leading != null) {
@@ -127,7 +119,7 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text.uppercase(),
         style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
-        color = SecondaryText,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier.padding(start = 4.dp, bottom = 10.dp),
     )
 }
@@ -141,8 +133,8 @@ fun FloatingCapsule(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(50),
-        color = Glass.copy(alpha = 0.92f),
-        border = BorderStroke(1.dp, if (isError) com.mursis.anycalc.ui.theme.Danger.copy(alpha = 0.5f) else HairlineStrong),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+        border = BorderStroke(1.dp, if (isError) MaterialTheme.colorScheme.error.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline),
         shadowElevation = 8.dp,
     ) {
         Row(
@@ -152,7 +144,7 @@ fun FloatingCapsule(
         ) {
             Text(
                 text = text,
-                color = if (isError) com.mursis.anycalc.ui.theme.Danger else PrimaryText,
+                color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
                 style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
                 maxLines = 2,
             )
@@ -180,9 +172,9 @@ fun ShimmerLines(lines: Int = 3) {
                     .background(
                         Brush.linearGradient(
                             listOf(
-                                GraphiteLight.copy(alpha = if (reduce) 0.7f else alpha),
-                                HairlineStrong.copy(alpha = if (reduce) 0.7f else alpha),
-                                GraphiteLight.copy(alpha = if (reduce) 0.7f else alpha),
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = if (reduce) 0.7f else alpha),
+                                MaterialTheme.colorScheme.outline.copy(alpha = if (reduce) 0.7f else alpha),
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = if (reduce) 0.7f else alpha),
                             ),
                         ),
                     ),
@@ -198,10 +190,10 @@ fun StatusDot(active: Boolean, label: String) {
             Modifier
                 .size6()
                 .clip(RoundedCornerShape(50))
-                .background(if (active) Success else SecondaryText.copy(alpha = 0.5f)),
+                .background(if (active) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)),
         )
         Spacer(Modifier.width(8.dp))
-        Text(label, style = androidx.compose.material3.MaterialTheme.typography.labelMedium, color = SecondaryText)
+        Text(label, style = androidx.compose.material3.MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -217,13 +209,13 @@ fun PromptField(value: String, onValueChange: (String) -> Unit, modifier: Modifi
         maxLines = 10,
         textStyle = androidx.compose.material3.MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = PrimaryText,
-            unfocusedTextColor = SecondaryText,
-            focusedBorderColor = HairlineStrong,
-            unfocusedBorderColor = Hairline,
-            focusedContainerColor = Graphite,
-            unfocusedContainerColor = Graphite,
-            cursorColor = Platinum,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            focusedBorderColor = MaterialTheme.colorScheme.outline,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            cursorColor = MaterialTheme.colorScheme.primary,
         ),
         shape = RoundedCornerShape(20.dp),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
@@ -240,14 +232,14 @@ fun KeyField(value: String, onValueChange: (String) -> Unit, label: String, modi
         visualTransformation = PasswordVisualTransformation(),
         modifier = modifier.fillMaxWidth(),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = PrimaryText,
-            unfocusedTextColor = SecondaryText,
-            focusedBorderColor = HairlineStrong,
-            unfocusedBorderColor = Hairline,
-            focusedContainerColor = Graphite,
-            unfocusedContainerColor = Graphite,
-            focusedLabelColor = Champagne,
-            cursorColor = Platinum,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            focusedBorderColor = MaterialTheme.colorScheme.outline,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedLabelColor = MaterialTheme.colorScheme.secondary,
+            cursorColor = MaterialTheme.colorScheme.primary,
         ),
         shape = RoundedCornerShape(18.dp),
     )
@@ -269,14 +261,14 @@ fun PlainField(
         visualTransformation = visualTransformation,
         modifier = modifier.fillMaxWidth(),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = PrimaryText,
-            unfocusedTextColor = SecondaryText,
-            focusedBorderColor = HairlineStrong,
-            unfocusedBorderColor = Hairline,
-            focusedContainerColor = Graphite,
-            unfocusedContainerColor = Graphite,
-            focusedLabelColor = Champagne,
-            cursorColor = Platinum,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            focusedBorderColor = MaterialTheme.colorScheme.outline,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedLabelColor = MaterialTheme.colorScheme.secondary,
+            cursorColor = MaterialTheme.colorScheme.primary,
         ),
         shape = RoundedCornerShape(18.dp),
     )

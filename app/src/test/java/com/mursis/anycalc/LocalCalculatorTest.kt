@@ -53,6 +53,19 @@ class LocalCalculatorTest {
     }
 
     @Test
+    fun chalkboardExpression() {
+        assertEquals("17", calculator.solve("(18-4×3)+24÷(7-3)×2-(15-6×2)÷3=?")?.short)
+    }
+
+    @Test
+    fun garbledOcrExpression() {
+        assertEquals(
+            "17",
+            calculator.solve("— (18 -- 4 ›‹ 3) + 24 -:- (7-3) ›‹2 - (15—6›‹2)—:-3 =?")?.short,
+        )
+    }
+
+    @Test
     fun irrelevantTextIsNotSolved() {
         assertNull(calculator.solve("Привет, как дела?"))
     }

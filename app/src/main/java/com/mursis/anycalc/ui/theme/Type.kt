@@ -1,5 +1,6 @@
 package com.mursis.anycalc.ui.theme
 
+
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -60,7 +61,6 @@ val AppTypography = Typography(
         fontWeight = FontWeight.Normal,
         fontSize = 13.sp,
         lineHeight = 19.sp,
-        color = SecondaryText,
     ),
     labelLarge = TextStyle(
         fontFamily = FontFamily.Default,

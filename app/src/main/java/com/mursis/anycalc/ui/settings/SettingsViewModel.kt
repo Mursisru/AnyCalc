@@ -92,4 +92,22 @@ class SettingsViewModel @Inject constructor(
     fun setVisionModel(id: String, value: String) = viewModelScope.launch { repo.setVisionModel(id, value) }
 
     fun setOcrMode(value: String) = viewModelScope.launch { repo.setOcrMode(value) }
+
+    fun setThemeMode(value: String) = viewModelScope.launch { repo.setThemeMode(value) }
+
+    fun setPalette(value: String) = viewModelScope.launch { repo.setPalette(value) }
+
+    fun setLanguage(value: String) = viewModelScope.launch { repo.setLanguage(value) }
+
+    fun setFontScale(value: Float) = viewModelScope.launch { repo.setFontScale(value) }
+
+    fun setCornerRadius(value: Int) = viewModelScope.launch { repo.setCornerRadius(value) }
+
+    fun setGlassEffect(value: Boolean) = viewModelScope.launch { repo.setGlassEffect(value) }
+
+    fun setCameraGrid(value: Boolean) = viewModelScope.launch { repo.setCameraGrid(value) }
+
+    fun setCameraSound(value: Boolean) = viewModelScope.launch { repo.setCameraSound(value) }
+
+    fun setCameraMirror(value: Boolean) = viewModelScope.launch { repo.setCameraMirror(value) }
 }

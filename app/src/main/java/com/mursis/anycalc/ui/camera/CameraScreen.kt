@@ -74,6 +74,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -93,16 +94,7 @@ import com.mursis.anycalc.ui.components.GlassCard
 import com.mursis.anycalc.ui.components.ShimmerLines
 import com.mursis.anycalc.ui.components.motionMs
 import com.mursis.anycalc.ui.solution.SolutionSheet
-import com.mursis.anycalc.ui.theme.BusinessBlack
-import com.mursis.anycalc.ui.theme.Champagne
-import com.mursis.anycalc.ui.theme.Glass
-import com.mursis.anycalc.ui.theme.Hairline
-import com.mursis.anycalc.ui.theme.HairlineStrong
 import com.mursis.anycalc.ui.theme.LocalReduceMotion
-import com.mursis.anycalc.ui.theme.Platinum
-import com.mursis.anycalc.ui.theme.PrimaryText
-import com.mursis.anycalc.ui.theme.SecondaryText
-import com.mursis.anycalc.ui.theme.Success
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -114,6 +106,8 @@ fun CameraRoute(
     viewModel: CameraViewModel = hiltViewModel(),
 ) {
     val ui by viewModel.ui.collectAsStateWithLifecycle()
+    val settingsVm: com.mursis.anycalc.ui.settings.SettingsViewModel = hiltViewModel()
+    val cameraSettings by settingsVm.settings.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var granted by remember {
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
@@ -142,7 +136,14 @@ fun CameraRoute(
             ContextCompat.getMainExecutor(context),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(results: ImageCapture.OutputFileResults) {
-                    BitmapFactory.decodeFile(file.absolutePath)?.let { viewModel.onImage(it) }
+                    if (cameraSettings.cameraSound) {
+                        runCatching {
+                            val sound = android.media.MediaActionSound()
+                            sound.play(android.media.MediaActionSound.SHUTTER_CLICK)
+                            sound.release()
+                        }
+                    }
+                    BitmapFactory.decodeFile(file.absolutePath)?.let { viewModel.capture(it) }
                 }
 
                 override fun onError(exception: ImageCaptureException) {
@@ -152,8 +153,16 @@ fun CameraRoute(
         )
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(BusinessBlack)) {
-        if (granted) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        val captured = ui.capturedBitmap
+        if (captured != null) {
+            Image(
+                bitmap = captured.asImageBitmap(),
+                contentDescription = "Снятое фото",
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else if (granted) {
             CameraPreview(
                 analyzer = analyzer,
                 imageCapture = imageCapture,
@@ -161,7 +170,7 @@ fun CameraRoute(
                 onCamera = { camera = it },
                 modifier = Modifier.fillMaxSize(),
             )
-            DetectionOverlay(ui, Modifier.fillMaxSize())
+            DetectionOverlay(ui, Modifier.fillMaxSize(), cameraSettings.cameraGrid, cameraSettings.cameraMirror)
         } else {
             PermissionPlaceholder(onRequest = { launcher.launch(Manifest.permission.CAMERA) })
         }
@@ -173,7 +182,7 @@ fun CameraRoute(
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            BusinessBlack.copy(alpha = 0.72f),
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.72f),
                             androidx.compose.ui.graphics.Color.Transparent,
                         ),
                     ),
@@ -182,8 +191,12 @@ fun CameraRoute(
                 .padding(horizontal = 20.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (captured != null) {
+                GlassPill(icon = R.drawable.ic_clear, onClick = { viewModel.closePhoto(); haptic(context) })
+                Spacer(Modifier.width(12.dp))
+            }
             Column(modifier = Modifier.weight(1f)) {
-                Text("AnyCalc", style = MaterialTheme.typography.titleLarge, color = PrimaryText)
+                Text(if (captured != null) "Фото" else "AnyCalc", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
                 Text("распознай · реши · пойми", style = MaterialTheme.typography.bodySmall)
             }
             StatusPill(active = ui.solution != null && !ui.isBusy)
@@ -230,16 +243,25 @@ fun CameraRoute(
                 }
             }
             if (ui.ocrEngine.isNotBlank()) {
-                Text("OCR: ${ui.ocrEngine}", style = MaterialTheme.typography.labelMedium, color = Champagne)
+                Text("OCR: ${ui.ocrEngine}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
+            }
+            if ((ui.solution == null || ui.solution?.confidence == 0f) && ui.recognizedText.isNotBlank() && !ui.isBusy) {
+                Text(
+                    ui.recognizedText.replace('\n', ' ').take(140),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                )
             }
             if (ui.status.isNotBlank() && ui.solution == null && !ui.isBusy) {
                 Text(
                     ui.status,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = PrimaryText,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
-                        .background(Glass.copy(alpha = 0.86f))
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f).copy(alpha = 0.86f))
                         .padding(horizontal = 16.dp, vertical = 9.dp),
                 )
             }
@@ -258,30 +280,54 @@ fun CameraRoute(
                 exit = slideOutVertically { it / 2 } + fadeOut(),
             ) {
                 GlassCard(modifier = Modifier.padding(bottom = 12.dp), radius = 26) {
-                    Text("Ввести задачу вручную", style = MaterialTheme.typography.labelMedium, color = Champagne)
+                    Text("Ввести задачу вручную", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
                     Spacer(Modifier.height(10.dp))
                     OutlinedTextField(
                         value = ui.manualText,
                         onValueChange = viewModel::onManualChange,
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Например: 2x^2 - 8x + 6 = 0", color = SecondaryText) },
+                        placeholder = { Text("Например: 2x^2 - 8x + 6 = 0", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         minLines = 1,
                         maxLines = 3,
                         shape = RoundedCornerShape(18.dp),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { viewModel.submit(ui.manualText) }),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = PrimaryText,
-                            unfocusedTextColor = PrimaryText,
-                            focusedBorderColor = HairlineStrong,
-                            unfocusedBorderColor = Hairline,
-                            focusedContainerColor = BusinessBlack,
-                            unfocusedContainerColor = BusinessBlack,
-                            cursorColor = Platinum,
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = MaterialTheme.colorScheme.outline,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            focusedContainerColor = MaterialTheme.colorScheme.background,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.background,
+                            cursorColor = MaterialTheme.colorScheme.primary,
                         ),
                     )
                     Spacer(Modifier.height(12.dp))
-                    CapsuleButton("Решить", onClick = { viewModel.submit(ui.manualText); haptic(context) }, modifier = Modifier.fillMaxWidth())
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        CapsuleButton("Решить", onClick = { viewModel.submit(ui.manualText); haptic(context) }, modifier = Modifier.weight(1f))
+                        CapsuleButton("Локально", primary = false, onClick = { viewModel.solveLocalNow(); haptic(context) }, modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+
+            if (captured == null) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(bottom = 14.dp)
+                        .size(78.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(androidx.compose.ui.graphics.Color.White.copy(alpha = 0.16f))
+                        .border(2.dp, androidx.compose.ui.graphics.Color.White, RoundedCornerShape(50))
+                        .clickable { takePhoto(); haptic(context) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        Modifier
+                            .size(62.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(androidx.compose.ui.graphics.Color.White),
+                    )
                 }
             }
 
@@ -289,22 +335,16 @@ fun CameraRoute(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(28.dp))
-                    .background(Glass.copy(alpha = 0.88f))
-                    .border(1.dp, Hairline, RoundedCornerShape(28.dp))
-                    .horizontalScroll(rememberScrollState())
-                    .padding(10.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.92f))
+                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(28.dp))
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                ControlPill(R.drawable.ic_camera, "Фото", false) { takePhoto() }
                 ControlPill(R.drawable.ic_gallery, "Галерея", false) {
-                    pickImage.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
-                    )
+                    pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 }
-                ControlPill(R.drawable.ic_keyboard, "Ввод", ui.showManual) { viewModel.toggleManual() }
-                ControlPill(R.drawable.ic_sparkle, "Локально", false) { viewModel.solveLocalNow(); haptic(context) }
-                ControlPill(R.drawable.ic_clear, "Очистить", false) { viewModel.clear() }
+                ControlPill(R.drawable.ic_keyboard, "Вручную", ui.showManual) { viewModel.toggleManual() }
                 ControlPill(R.drawable.ic_history, "История", false) { onHistory() }
                 ControlPill(R.drawable.ic_settings, "Настройки", false) { onSettings() }
             }
@@ -383,17 +423,26 @@ private fun CameraPreview(
 }
 
 @Composable
-private fun DetectionOverlay(state: CameraUiState, modifier: Modifier) {
+private fun DetectionOverlay(state: CameraUiState, modifier: Modifier, grid: Boolean, mirror: Boolean) {
+    val strokeColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.85f)
+    val glowColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f)
+    val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f)
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
+        if (grid) {
+            for (i in 1..2) {
+                drawLine(gridColor, Offset(w * i / 3f, 0f), Offset(w * i / 3f, h), strokeWidth = 1.dp.toPx())
+                drawLine(gridColor, Offset(0f, h * i / 3f), Offset(w, h * i / 3f), strokeWidth = 1.dp.toPx())
+            }
+        }
         state.boxes.forEach { box ->
-            val left = box.left * w
+            val left = (if (mirror) 1f - box.right else box.left) * w
             val top = box.top * h
-            val right = box.right * w
+            val right = (if (mirror) 1f - box.left else box.right) * w
             val bottom = box.bottom * h
             drawRoundRect(
-                color = Champagne.copy(alpha = 0.85f),
+                color = strokeColor,
                 topLeft = Offset(left - 8f, top - 8f),
                 size = Size(right - left + 16f, bottom - top + 16f),
                 cornerRadius = CornerRadius(20.dp.toPx()),
@@ -401,7 +450,7 @@ private fun DetectionOverlay(state: CameraUiState, modifier: Modifier) {
             )
         }
         val glow = Brush.radialGradient(
-            colors = listOf(Champagne.copy(alpha = 0.08f), androidx.compose.ui.graphics.Color.Transparent),
+            colors = listOf(glowColor, androidx.compose.ui.graphics.Color.Transparent),
             center = Offset(w / 2, h / 2),
             radius = minOf(w, h) * 0.55f,
         )
@@ -414,7 +463,7 @@ private fun PermissionPlaceholder(onRequest: () -> Unit) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         GlassCard {
             Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Доступ к камере", style = MaterialTheme.typography.titleLarge, color = PrimaryText)
+                Text("Доступ к камере", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(Modifier.height(8.dp))
                 Text("Нужен для live-распознавания задач", style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(18.dp))
@@ -429,14 +478,14 @@ private fun StatusPill(active: Boolean) {
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(50))
-            .background(Glass)
-            .border(1.dp, Hairline, RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(50))
             .padding(horizontal = 12.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(7.dp).clip(RoundedCornerShape(50)).background(if (active) Success else SecondaryText))
+        Box(Modifier.size(7.dp).clip(RoundedCornerShape(50)).background(if (active) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant))
         Spacer(Modifier.width(7.dp))
-        Text(if (active) "LIVE" else "READY", style = MaterialTheme.typography.labelMedium, color = if (active) Success else SecondaryText)
+        Text(if (active) "LIVE" else "READY", style = MaterialTheme.typography.labelMedium, color = if (active) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -446,12 +495,12 @@ private fun GlassPill(icon: Int, onClick: () -> Unit) {
         modifier = Modifier
             .size(44.dp)
             .clip(RoundedCornerShape(50))
-            .background(Glass)
-            .border(1.dp, Hairline, RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(50))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Image(painterResource(icon), contentDescription = "Вспышка", modifier = Modifier.size(22.dp))
+        Image(painterResource(icon), contentDescription = "Действие", modifier = Modifier.size(22.dp))
     }
 }
 
@@ -460,7 +509,7 @@ private fun ControlPill(icon: Int, label: String, active: Boolean, onClick: () -
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(20.dp))
-            .background(if (active) Platinum.copy(alpha = 0.14f) else androidx.compose.ui.graphics.Color.Transparent)
+            .background(if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else androidx.compose.ui.graphics.Color.Transparent)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -473,7 +522,7 @@ private fun ControlPill(icon: Int, label: String, active: Boolean, onClick: () -
                 .alpha(if (active) 1f else 0.75f),
         )
         Spacer(Modifier.height(3.dp))
-        Text(label, color = if (active) Platinum else SecondaryText, style = MaterialTheme.typography.labelMedium)
+        Text(label, color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
     }
 }
 

@@ -35,12 +35,6 @@ import com.mursis.anycalc.ui.components.CapsuleButton
 import com.mursis.anycalc.ui.components.GlassCard
 import com.mursis.anycalc.ui.components.PromptField
 import com.mursis.anycalc.ui.components.SectionLabel
-import com.mursis.anycalc.ui.theme.Champagne
-import com.mursis.anycalc.ui.theme.Graphite
-import com.mursis.anycalc.ui.theme.HairlineStrong
-import com.mursis.anycalc.ui.theme.PrimaryText
-import com.mursis.anycalc.ui.theme.SecondaryText
-import com.mursis.anycalc.ui.theme.Success
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,8 +54,8 @@ fun SolutionSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = Graphite,
-        contentColor = PrimaryText,
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         dragHandle = {
             Box(
@@ -69,7 +63,7 @@ fun SolutionSheet(
                     .padding(top = 10.dp, bottom = 4.dp)
                     .size(40.dp, 4.dp)
                     .clip(RoundedCornerShape(50))
-                    .background(HairlineStrong),
+                    .background(MaterialTheme.colorScheme.outline),
             )
         },
     ) {
@@ -81,9 +75,9 @@ fun SolutionSheet(
                 .padding(bottom = 24.dp)
                 .navigationBarsPadding(),
         ) {
-            Text("Решение", style = MaterialTheme.typography.headlineMedium, color = PrimaryText)
+            Text("Решение", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.height(14.dp))
-            Text(solution.short, style = MaterialTheme.typography.titleLarge, color = Champagne)
+            Text(solution.short, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.secondary)
             Spacer(Modifier.height(16.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -111,16 +105,16 @@ fun SolutionSheet(
                                 Modifier
                                     .size(26.dp)
                                     .clip(RoundedCornerShape(50))
-                                    .background(HairlineStrong),
+                                    .background(MaterialTheme.colorScheme.outline),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Text("${index + 1}", style = MaterialTheme.typography.labelMedium, color = PrimaryText)
+                                Text("${index + 1}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface)
                             }
                             Spacer(Modifier.width(12.dp))
                             Text(
                                 step.replace(Regex("^\\d+[.)]\\s*"), ""),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = PrimaryText,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.weight(1f),
                             )
                         }
@@ -181,10 +175,10 @@ private fun MetaChip(text: String) {
     Text(
         text,
         style = MaterialTheme.typography.labelMedium,
-        color = SecondaryText,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
             .clip(RoundedCornerShape(50))
-            .background(HairlineStrong.copy(alpha = 0.35f))
+            .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
             .padding(horizontal = 12.dp, vertical = 6.dp),
     )
 }

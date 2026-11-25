@@ -44,6 +44,15 @@ data class AppSettings(
     val debounceMs: Int = 550,
     val ocrMode: String = "AUTO",
     val remoteModels: List<String> = emptyList(),
+    val themeMode: String = "DARK",
+    val paletteId: String = "dark_obsidian",
+    val language: String = "ru",
+    val fontScale: Float = 1f,
+    val cornerRadius: Int = 24,
+    val glassEffect: Boolean = true,
+    val cameraGrid: Boolean = false,
+    val cameraSound: Boolean = false,
+    val cameraMirror: Boolean = false,
 ) {
     val orderedProviders: List<ProviderConfig>
         get() = providerOrder.mapNotNull { providers[it] }
@@ -78,6 +87,15 @@ private val K_AUTO_SAVE = booleanPreferencesKey("auto_save")
 private val K_DEBOUNCE = intPreferencesKey("debounce_ms")
 private val K_OCR_MODE = stringPreferencesKey("ocr_mode")
 private val K_REMOTE_MODELS = stringPreferencesKey("remote_models")
+private val K_THEME_MODE = stringPreferencesKey("theme_mode")
+private val K_PALETTE = stringPreferencesKey("palette_id")
+private val K_LANGUAGE = stringPreferencesKey("language")
+private val K_FONT_SCALE = androidx.datastore.preferences.core.floatPreferencesKey("font_scale")
+private val K_CORNER = intPreferencesKey("corner_radius")
+private val K_GLASS = booleanPreferencesKey("glass_effect")
+private val K_CAM_GRID = booleanPreferencesKey("camera_grid")
+private val K_CAM_SOUND = booleanPreferencesKey("camera_sound")
+private val K_CAM_MIRROR = booleanPreferencesKey("camera_mirror")
 
 @Singleton
 class SettingsRepository @Inject constructor(
@@ -113,6 +131,15 @@ class SettingsRepository @Inject constructor(
             debounceMs = prefs[K_DEBOUNCE] ?: 550,
             ocrMode = prefs[K_OCR_MODE] ?: "AUTO",
             remoteModels = prefs[K_REMOTE_MODELS]?.split('|')?.filter { it.isNotBlank() } ?: emptyList(),
+            themeMode = prefs[K_THEME_MODE] ?: "DARK",
+            paletteId = prefs[K_PALETTE] ?: "dark_obsidian",
+            language = prefs[K_LANGUAGE] ?: "ru",
+            fontScale = prefs[K_FONT_SCALE] ?: 1f,
+            cornerRadius = prefs[K_CORNER] ?: 24,
+            glassEffect = prefs[K_GLASS] != false,
+            cameraGrid = prefs[K_CAM_GRID] == true,
+            cameraSound = prefs[K_CAM_SOUND] == true,
+            cameraMirror = prefs[K_CAM_MIRROR] == true,
         )
     }
 
@@ -153,4 +180,28 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setVisionModel(id: String, value: String) =
         store.edit { it[stringPreferencesKey("vision_$id")] = value.trim() }
+
+    suspend fun setThemeMode(value: String) = store.edit {
+        it[K_THEME_MODE] = value
+        val prefix = if (value == "DARK") "light_" else "dark_"
+        if (it[K_PALETTE]?.startsWith(prefix) == true) {
+            it[K_PALETTE] = if (value == "DARK") "dark_obsidian" else "light_paper"
+        }
+    }
+
+    suspend fun setPalette(value: String) = store.edit { it[K_PALETTE] = value }
+
+    suspend fun setLanguage(value: String) = store.edit { it[K_LANGUAGE] = value }
+
+    suspend fun setFontScale(value: Float) = store.edit { it[K_FONT_SCALE] = value.coerceIn(0.85f, 1.25f) }
+
+    suspend fun setCornerRadius(value: Int) = store.edit { it[K_CORNER] = value.coerceIn(12, 32) }
+
+    suspend fun setGlassEffect(value: Boolean) = store.edit { it[K_GLASS] = value }
+
+    suspend fun setCameraGrid(value: Boolean) = store.edit { it[K_CAM_GRID] = value }
+
+    suspend fun setCameraSound(value: Boolean) = store.edit { it[K_CAM_SOUND] = value }
+
+    suspend fun setCameraMirror(value: Boolean) = store.edit { it[K_CAM_MIRROR] = value }
 }

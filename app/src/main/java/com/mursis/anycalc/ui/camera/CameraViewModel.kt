@@ -33,6 +33,7 @@ data class CameraUiState(
     val manualText: String = "",
     val promptDraft: String = "",
     val ocrEngine: String = "",
+    val capturedBitmap: Bitmap? = null,
     val error: String? = null,
 )
 
@@ -85,6 +86,7 @@ class CameraViewModel @Inject constructor(
                     error = null,
                     boxes = emptyList(),
                     solution = null,
+                    capturedBitmap = bitmap,
                 )
             }
             val current = settings.settings.first()
@@ -111,6 +113,24 @@ class CameraViewModel @Inject constructor(
             }
             solve(result.text, showSheet = false)
         }
+    }
+
+    /** Снятое фото заменяет live-превью и сразу идёт в OCR. */
+    fun capture(bitmap: Bitmap) {
+        _ui.update { it.copy(capturedBitmap = bitmap) }
+        onImage(bitmap)
+    }
+
+    fun closePhoto() = _ui.update {
+        it.copy(
+            capturedBitmap = null,
+            recognizedText = "",
+            boxes = emptyList(),
+            solution = null,
+            ocrEngine = "",
+            status = "Наведите камеру на задачу",
+            error = null,
+        )
     }
 
     /** Продвинутый локальный калькулятор — работает без провайдеров и сети. */

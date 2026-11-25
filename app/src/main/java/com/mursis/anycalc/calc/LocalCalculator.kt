@@ -58,7 +58,11 @@ class LocalCalculator @Inject constructor() {
 
     private fun normalize(s: String) = s
         .replace("²", "^2").replace("³", "^3")
-        .replace("×", "*").replace("÷", "/").replace("−", "-")
+        .replace("—:-", "/").replace("-:-", "/")
+        .replace("›‹", "*").replace("‹", "*").replace("›", "*")
+        .replace("×", "*").replace("÷", "/").replace("−", "-").replace(":", "/")
+        .replace("—", "-").replace("--", "-")
+        .replace(Regex("^\\s*-\\s*\\("), "(")
         .replace("–", "-").replace("·", "*").replace("х", "x")
         .replace("ё", "е").replace(" ", " ")
 
@@ -276,6 +280,7 @@ class LocalCalculator @Inject constructor() {
 
     private fun extractExpression(text: String): String? {
         var cleaned = text
+            .replace(Regex("""=\s*\?"""), " ")
             .replace(Regex("""(?i)(реши|вычисли|посчитай|найди|calcul|solve|compute|what is|сколько|чему равно)"""), " ")
             .replace(Regex("""[^\dA-Za-z+\-*/^().,\s=]"""), " ")
             .trim()

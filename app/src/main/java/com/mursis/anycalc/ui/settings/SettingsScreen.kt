@@ -2,6 +2,7 @@ package com.mursis.anycalc.ui.settings
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -49,12 +50,7 @@ import com.mursis.anycalc.ui.components.KeyField
 import com.mursis.anycalc.ui.components.PlainField
 import com.mursis.anycalc.ui.components.PromptField
 import com.mursis.anycalc.ui.components.SectionLabel
-import com.mursis.anycalc.ui.theme.BusinessBlack
-import com.mursis.anycalc.ui.theme.Champagne
-import com.mursis.anycalc.ui.theme.HairlineStrong
-import com.mursis.anycalc.ui.theme.PrimaryText
-import com.mursis.anycalc.ui.theme.SecondaryText
-import com.mursis.anycalc.ui.theme.Success
+import com.mursis.anycalc.ui.components.ScrollEdgeFade
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -65,15 +61,16 @@ fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMod
     var checkState by remember { mutableStateOf<Pair<String, String>?>(null) }
     val scope = rememberCoroutineScope()
 
-    Column(modifier = Modifier.fillMaxSize().background(BusinessBlack)) {
+    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(modifier = Modifier.statusBarsPadding().padding(horizontal = 20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Настройки", style = MaterialTheme.typography.headlineMedium, color = PrimaryText, modifier = Modifier.weight(1f))
+                Text("Настройки", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                 CapsuleButton("Назад", onClick = onBack, primary = false, modifier = Modifier.width(110.dp))
             }
             Spacer(Modifier.height(12.dp))
         }
 
+        ScrollEdgeFade(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -81,7 +78,7 @@ fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMod
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 28.dp),
         ) {
-            SectionLabel("Провайдеры · перетащите ≡ для приоритета")
+            SectionLabel("Провайдеры · порядок перетаскиванием")
             val list = settings.orderedProviders
             list.forEachIndexed { index, provider ->
                 ProviderRow(
@@ -122,7 +119,7 @@ fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMod
                 )
                 if (checkState?.first == "lan") {
                     Spacer(Modifier.height(8.dp))
-                    Text(checkState?.second.orEmpty(), style = MaterialTheme.typography.bodySmall, color = Champagne)
+                    Text(checkState?.second.orEmpty(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
                 }
             }
 
@@ -151,16 +148,71 @@ fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMod
                 )
                 if (checkState?.first == "models") {
                     Spacer(Modifier.height(8.dp))
-                    Text(checkState?.second.orEmpty(), style = MaterialTheme.typography.bodySmall, color = SecondaryText)
+                    Text(checkState?.second.orEmpty(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (settings.remoteModels.isNotEmpty()) {
                     Spacer(Modifier.height(10.dp))
                     Text(
                         settings.remoteModels.take(12).joinToString(" · "),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Champagne,
+                        color = MaterialTheme.colorScheme.secondary,
                     )
                 }
+            }
+
+            Spacer(Modifier.height(12.dp))
+            SectionLabel("Оформление")
+            GlassCard {
+                val dark = settings.themeMode != "LIGHT"
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    CapsuleButton("Тёмная", onClick = { viewModel.setThemeMode("DARK") }, primary = dark, modifier = Modifier.weight(1f))
+                    CapsuleButton("Светлая", onClick = { viewModel.setThemeMode("LIGHT") }, primary = !dark, modifier = Modifier.weight(1f))
+                }
+                val palettes = if (dark) com.mursis.anycalc.data.DARK_PALETTES else com.mursis.anycalc.data.LIGHT_PALETTES
+                for (group in listOf("Бизнес", "Пастель")) {
+                    Spacer(Modifier.height(14.dp))
+                    Text(group, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                        palettes.filter { it.group == group }.forEach { p ->
+                            PaletteSwatch(
+                                palette = p,
+                                selected = p.id == settings.paletteId,
+                                onClick = { viewModel.setPalette(p.id) },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+                Text("Размер текста: ${(settings.fontScale * 100).toInt()}%", style = MaterialTheme.typography.bodyMedium)
+                Slider(value = settings.fontScale, onValueChange = viewModel::setFontScale, valueRange = 0.85f..1.25f)
+                Text("Скругления: ${settings.cornerRadius} dp", style = MaterialTheme.typography.bodyMedium)
+                Slider(value = settings.cornerRadius.toFloat(), onValueChange = { viewModel.setCornerRadius(it.toInt()) }, valueRange = 12f..32f)
+                ToggleRow("Матовое стекло", "Полупрозрачные поверхности", settings.glassEffect, viewModel::setGlassEffect)
+                ToggleRow("Уменьшить анимации", "Плавность вместо движения", settings.reduceMotion, viewModel::setReduceMotion)
+            }
+
+            Spacer(Modifier.height(12.dp))
+            SectionLabel("Язык")
+            GlassCard {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    listOf("ru" to "Русский", "en" to "English", "system" to "Системный").forEach { (code, label) ->
+                        CapsuleButton(label, onClick = { viewModel.setLanguage(code) }, primary = settings.language == code, modifier = Modifier.weight(1f))
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text("Язык применяется к форматам дат и интерфейсу после перезапуска.", style = MaterialTheme.typography.bodySmall)
+            }
+
+            Spacer(Modifier.height(12.dp))
+            SectionLabel("Камера")
+            GlassCard {
+                ToggleRow("Сетка", "Линии композиции на预览", settings.cameraGrid, viewModel::setCameraGrid)
+                ToggleRow("Звук затвора", "Короткий щелчок при съёмке", settings.cameraSound, viewModel::setCameraSound)
+                ToggleRow("Зеркало", "Отображать как селфи-камеру", settings.cameraMirror, viewModel::setCameraMirror)
+                Text("Debounce OCR: ${settings.debounceMs} мс", style = MaterialTheme.typography.bodyMedium)
+                Slider(value = settings.debounceMs.toFloat(), onValueChange = { viewModel.setDebounce(it.toInt()) }, valueRange = 200f..1200f)
             }
 
             Spacer(Modifier.height(12.dp))
@@ -178,7 +230,7 @@ fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMod
                 ToggleRow("Уменьшить анимации", "Отключает движение для доступности", settings.reduceMotion, viewModel::setReduceMotion)
                 ToggleRow("Автосохранение", "Сохранять ответы в историю", settings.autoSave, viewModel::setAutoSave)
                 Spacer(Modifier.height(14.dp))
-                Text("Debounce OCR: ${settings.debounceMs} мс", style = MaterialTheme.typography.bodyMedium, color = PrimaryText)
+                Text("Debounce OCR: ${settings.debounceMs} мс", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                 Slider(
                     value = settings.debounceMs.toFloat(),
                     onValueChange = { viewModel.setDebounce(it.roundToInt()) },
@@ -193,6 +245,7 @@ fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMod
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.fillMaxWidth(),
             )
+        }
         }
     }
 }
@@ -231,7 +284,7 @@ private fun ProviderRow(
                 modifier = Modifier
                     .size(38.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(HairlineStrong.copy(alpha = 0.4f))
+                    .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
                     .pointerInput(provider.id) {
                         detectDragGestures(
                             onDrag = { change, amount ->
@@ -256,7 +309,7 @@ private fun ProviderRow(
             }
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).clickableNoRipple(onToggleExpand)) {
-                Text(provider.name, style = MaterialTheme.typography.titleMedium, color = PrimaryText)
+                Text(provider.name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                 Text(
                     if (provider.kind == ProviderKind.OPENCODE) "OpenCode Server" else "OpenAI-совместимый API",
                     style = MaterialTheme.typography.bodySmall,
@@ -265,7 +318,7 @@ private fun ProviderRow(
             Switch(
                 checked = provider.enabled,
                 onCheckedChange = { onUpdate(url, model, it) },
-                colors = SwitchDefaults.colors(checkedThumbColor = Champagne, checkedTrackColor = Champagne.copy(alpha = 0.35f)),
+                colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.secondary, checkedTrackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.35f)),
             )
         }
 
@@ -295,9 +348,40 @@ private fun ProviderRow(
             }
             if (checkResult != null) {
                 Spacer(Modifier.height(8.dp))
-                Text(checkResult, style = MaterialTheme.typography.bodySmall, color = if (checkResult.startsWith("OK")) Success else SecondaryText)
+                Text(checkResult, style = MaterialTheme.typography.bodySmall, color = if (checkResult.startsWith("OK")) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+    }
+}
+
+@Composable
+private fun PaletteSwatch(
+    palette: com.mursis.anycalc.data.Palette,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(palette.surface)
+            .border(1.dp, if (selected) palette.accent else palette.border, RoundedCornerShape(16.dp))
+            .clickableNoRipple(onClick)
+            .padding(10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            listOf(palette.background, palette.surfaceVariant, palette.accent, palette.accentSoft).forEach { color ->
+                Box(Modifier.size(14.dp).clip(RoundedCornerShape(4.dp)).background(color))
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            palette.name,
+            style = MaterialTheme.typography.labelMedium,
+            color = palette.text,
+            maxLines = 1,
+        )
     }
 }
 
@@ -305,13 +389,13 @@ private fun ProviderRow(
 private fun ToggleRow(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge, color = PrimaryText)
+            Text(title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
             Text(subtitle, style = MaterialTheme.typography.bodySmall)
         }
         Switch(
             checked = checked,
             onCheckedChange = onChange,
-            colors = SwitchDefaults.colors(checkedThumbColor = Champagne, checkedTrackColor = Champagne.copy(alpha = 0.35f)),
+            colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.secondary, checkedTrackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.35f)),
         )
     }
 }

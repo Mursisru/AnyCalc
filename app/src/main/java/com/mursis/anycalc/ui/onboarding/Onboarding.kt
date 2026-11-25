@@ -34,12 +34,6 @@ import com.mursis.anycalc.R
 import androidx.compose.ui.unit.sp
 import com.mursis.anycalc.ui.components.CapsuleButton
 import com.mursis.anycalc.ui.components.motionMs
-import com.mursis.anycalc.ui.theme.BusinessBlack
-import com.mursis.anycalc.ui.theme.Champagne
-import com.mursis.anycalc.ui.theme.GraphiteLight
-import com.mursis.anycalc.ui.theme.HairlineStrong
-import com.mursis.anycalc.ui.theme.PrimaryText
-import com.mursis.anycalc.ui.theme.SecondaryText
 
 private data class Page(val glyph: String, val title: String, val body: String)
 
@@ -56,19 +50,19 @@ fun Onboarding(onDone: () -> Unit) {
     val current = PAGES[page]
     val duration = motionMs(320)
 
-    Box(Modifier.fillMaxSize().background(BusinessBlack)) {
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(
             modifier = Modifier.fillMaxSize().padding(horizontal = 28.dp, vertical = 40.dp),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text("ANYCALC", style = MaterialTheme.typography.labelMedium, color = Champagne, letterSpacing = 2.sp)
+            Text("ANYCALC", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary, letterSpacing = 2.sp)
 
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Box(
                     modifier = Modifier
                         .size(190.dp)
                         .clip(RoundedCornerShape(48.dp))
-                        .background(GraphiteLight)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                         .padding(1.dp),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -76,7 +70,7 @@ fun Onboarding(onDone: () -> Unit) {
                         Modifier
                             .fillMaxSize()
                             .clip(RoundedCornerShape(47.dp))
-                            .background(androidx.compose.ui.graphics.Brush.radialGradient(listOf(HairlineStrong, BusinessBlack))),
+                            .background(androidx.compose.ui.graphics.Brush.radialGradient(listOf(MaterialTheme.colorScheme.outline, MaterialTheme.colorScheme.background))),
                         contentAlignment = Alignment.Center,
                     ) {
                         AnimatedContent(
@@ -91,7 +85,7 @@ fun Onboarding(onDone: () -> Unit) {
                                 modifier = Modifier.size(120.dp),
                             )
                             if (glyph != "◎") {
-                                Text(glyph, style = MaterialTheme.typography.displayLarge, color = Champagne)
+                                Text(glyph, style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.secondary)
                             }
                         }
                     }
@@ -105,9 +99,9 @@ fun Onboarding(onDone: () -> Unit) {
                     label = "onboarding-text",
                 ) { index ->
                     Column {
-                        Text(PAGES[index].title, style = MaterialTheme.typography.displayMedium, color = PrimaryText)
+                        Text(PAGES[index].title, style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(Modifier.height(14.dp))
-                        Text(PAGES[index].body, style = MaterialTheme.typography.bodyLarge, color = SecondaryText)
+                        Text(PAGES[index].body, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 Spacer(Modifier.height(28.dp))
@@ -117,7 +111,7 @@ fun Onboarding(onDone: () -> Unit) {
                             Modifier
                                 .size(if (index == page) 22.dp else 7.dp, 7.dp)
                                 .clip(RoundedCornerShape(50))
-                                .background(if (index == page) Champagne else HairlineStrong)
+                                .background(if (index == page) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outline)
                                 .alpha(if (index == page) 1f else 0.6f),
                         )
                     }

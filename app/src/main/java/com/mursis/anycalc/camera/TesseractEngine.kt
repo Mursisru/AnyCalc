@@ -31,12 +31,23 @@ class TesseractEngine @Inject constructor(@ApplicationContext private val contex
     suspend fun recognize(bitmap: Bitmap): OcrText = withContext(Dispatchers.IO) {
         val api = TessBaseAPI()
         try {
-            if (!api.init(dataPath.parent, "eng+rus")) {
+            val ok = api.init(dataPath.parent, "eng+rus") ||
+                api.init(dataPath.parent, "eng") ||
+                api.init(dataPath.parent, "rus")
+            if (!ok) {
                 return@withContext OcrText("", 0f)
             }
-            api.setImage(bitmap)
+            val compatible = if (bitmap.config == android.graphics.Bitmap.Config.ARGB_8888) {
+                bitmap
+            } else {
+                bitmap.copy(android.graphics.Bitmap.Config.ARGB_8888, false)
+            }
+            api.setImage(compatible)
             val text = api.getUTF8Text()?.trim().orEmpty()
             OcrText(text, api.meanConfidence() / 100f)
+        } catch (e: Exception) {
+            android.util.Log.d("TesseractEngine", "recognize failed: ${e.message}")
+            OcrText("", 0f)
         } finally {
             api.end()
         }

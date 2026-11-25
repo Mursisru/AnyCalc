@@ -38,15 +38,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mursis.anycalc.data.ScanEntity
 import com.mursis.anycalc.ui.components.CapsuleButton
 import com.mursis.anycalc.ui.components.GlassCard
-import com.mursis.anycalc.ui.theme.BusinessBlack
-import com.mursis.anycalc.ui.theme.Champagne
-import com.mursis.anycalc.ui.theme.Danger
-import com.mursis.anycalc.ui.theme.Glass
-import com.mursis.anycalc.ui.theme.Graphite
-import com.mursis.anycalc.ui.theme.Hairline
-import com.mursis.anycalc.ui.theme.HairlineStrong
-import com.mursis.anycalc.ui.theme.PrimaryText
-import com.mursis.anycalc.ui.theme.SecondaryText
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -56,28 +47,28 @@ fun HistoryRoute(onBack: () -> Unit, viewModel: HistoryViewModel = hiltViewModel
     val query by viewModel.query.collectAsStateWithLifecycle()
     val items by viewModel.items.collectAsStateWithLifecycle()
 
-    Column(modifier = Modifier.fillMaxSize().background(BusinessBlack)) {
+    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(modifier = Modifier.statusBarsPadding().padding(horizontal = 20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("История", style = MaterialTheme.typography.headlineMedium, color = PrimaryText, modifier = Modifier.weight(1f))
+                Text("История", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                 CapsuleButton("Назад", onClick = onBack, primary = false, modifier = Modifier.width(110.dp))
             }
             Spacer(Modifier.height(16.dp))
             OutlinedTextField(
                 value = query,
                 onValueChange = viewModel::onQuery,
-                placeholder = { Text("Поиск по задачам и ответам", color = SecondaryText) },
+                placeholder = { Text("Поиск по задачам и ответам", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 singleLine = true,
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = PrimaryText,
-                    unfocusedTextColor = PrimaryText,
-                    focusedBorderColor = HairlineStrong,
-                    unfocusedBorderColor = Hairline,
-                    focusedContainerColor = Glass,
-                    unfocusedContainerColor = Glass,
-                    cursorColor = Champagne,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    focusedBorderColor = MaterialTheme.colorScheme.outline,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                    focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                    cursorColor = MaterialTheme.colorScheme.secondary,
                 ),
             )
             Spacer(Modifier.height(14.dp))
@@ -86,12 +77,13 @@ fun HistoryRoute(onBack: () -> Unit, viewModel: HistoryViewModel = hiltViewModel
         if (items.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("◇", style = MaterialTheme.typography.displayMedium, color = HairlineStrong)
+                    Text("◇", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.outline)
                     Spacer(Modifier.height(10.dp))
                     Text("Здесь появятся решенные задачи", style = MaterialTheme.typography.bodySmall)
                 }
             }
         } else {
+            com.mursis.anycalc.ui.components.ScrollEdgeFade(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp, 0.dp, 20.dp, 24.dp),
@@ -104,6 +96,7 @@ fun HistoryRoute(onBack: () -> Unit, viewModel: HistoryViewModel = hiltViewModel
                     Spacer(Modifier.height(6.dp))
                     CapsuleButton("Очистить историю", onClick = viewModel::clear, primary = false, modifier = Modifier.fillMaxWidth())
                 }
+            }
             }
         }
     }
@@ -127,15 +120,15 @@ private fun SwipeItem(item: ScanEntity, onDelete: () -> Unit) {
                 Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(24.dp))
-                    .background(Danger.copy(alpha = 0.22f)),
+                    .background(MaterialTheme.colorScheme.error.copy(alpha = 0.22f)),
                 contentAlignment = Alignment.CenterEnd,
             ) {
-                Text("Удалить", color = Danger, modifier = Modifier.padding(end = 24.dp))
+                Text("Удалить", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(end = 24.dp))
             }
         },
         enableDismissFromStartToEnd = false,
     ) {
-        GlassCard(radius = 24, padding = 16, tint = Graphite) {
+        GlassCard(radius = 24, padding = 16, tint = MaterialTheme.colorScheme.surface) {
             Row(verticalAlignment = Alignment.Top) {
                 Box(
                     Modifier
@@ -143,7 +136,7 @@ private fun SwipeItem(item: ScanEntity, onDelete: () -> Unit) {
                         .clip(RoundedCornerShape(16.dp))
                         .background(
                             androidx.compose.ui.graphics.Brush.linearGradient(
-                                listOf(HairlineStrong, Champagne.copy(alpha = 0.35f)),
+                                listOf(MaterialTheme.colorScheme.outline, MaterialTheme.colorScheme.secondary.copy(alpha = 0.35f)),
                             ),
                         ),
                 )
@@ -152,12 +145,12 @@ private fun SwipeItem(item: ScanEntity, onDelete: () -> Unit) {
                     Text(
                         item.text.replace('\n', ' '),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = PrimaryText,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text(item.short, style = MaterialTheme.typography.labelMedium, color = Champagne, maxLines = 1)
+                    Text(item.short, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary, maxLines = 1)
                     Spacer(Modifier.height(8.dp))
                     Text(
                         "${formatDate(item.createdAt)} · ${item.provider}",
