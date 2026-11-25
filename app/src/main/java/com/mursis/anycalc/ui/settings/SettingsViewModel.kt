@@ -3,7 +3,10 @@ package com.mursis.anycalc.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mursis.anycalc.ai.AiRepository
+import com.mursis.anycalc.ai.LanServerDiscovery
 import com.mursis.anycalc.data.AppSettings
+import com.mursis.anycalc.data.ProviderKind
+import com.mursis.anycalc.data.PROVIDER_PRESETS
 import com.mursis.anycalc.data.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,6 +18,7 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val repo: SettingsRepository,
     private val ai: AiRepository,
+    private val discovery: LanServerDiscovery,
 ) : ViewModel() {
     val settings = repo.settings.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppSettings())
 
@@ -45,7 +49,32 @@ class SettingsViewModel @Inject constructor(
 
     suspend fun check(id: String): String {
         val provider = settings.value.providers[id] ?: return "Провайдер не найден"
-        return ai.checkConnection(provider, settings.value)
+        var result = ai.checkConnection(provider, settings.value)
+        if (provider.kind == ProviderKind.OPENCODE &&
+            provider.baseUrl.contains("127.0.0.1") &&
+            !result.startsWith("OK")
+        ) {
+            val found = discoverAndApply()
+            if (found != null) {
+                val updated = settings.value.providers[id] ?: provider
+                result = "Найден сервер в LAN: $found · " + ai.checkConnection(updated, settings.value)
+            } else {
+                result += " · не найден в LAN"
+            }
+        }
+        return result
+    }
+
+    /** Ищет сервер в Wi-Fi сети и сохраняет найденный адрес. */
+    suspend fun discoverAndApply(): String? {
+        val found = discovery.find() ?: return null
+        val preset = PROVIDER_PRESETS.first { it.id == "opencode" }
+        repo.updateProvider("opencode", found, preset.model, true)
+        return found
+    }
+
+    fun discoverServer(onResult: (String) -> Unit) = viewModelScope.launch {
+        onResult(discoverAndApply()?.let { "Сервер найден: $it" } ?: "Сервер в LAN не найден")
     }
 
     suspend fun refreshModels(): String {

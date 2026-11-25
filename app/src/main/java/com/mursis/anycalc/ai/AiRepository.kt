@@ -111,7 +111,9 @@ class AiRepository @Inject constructor(
                         "HTTP $code · $message (сервер требует пароль — задайте его в Настройках)"
                     }
                 } catch (e: Exception) {
-                    "Ошибка: ${e.message?.take(100).orEmpty()}"
+                    "Не подключился: ${e.message?.take(80).orEmpty()}. " +
+                        "На ПК: opencode service set hostname 0.0.0.0 && opencode service restart; " +
+                        "в приложении укажите http://IP-ПК:28894"
                 }
             }
             val url = provider.baseUrl.trimEnd('/') + "/models"

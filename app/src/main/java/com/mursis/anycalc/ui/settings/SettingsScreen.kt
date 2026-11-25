@@ -108,6 +108,25 @@ fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMod
             }
 
             Spacer(Modifier.height(12.dp))
+            SectionLabel("OpenCode Server в локальной сети")
+            GlassCard {
+                Text(
+                    "127.0.0.1 — это сам телефон. На ПК: opencode service set hostname 0.0.0.0 && opencode service restart. Затем найдите сервер в Wi‑Fi или введите http://IP-ПК:28894 в Base URL.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(Modifier.height(12.dp))
+                CapsuleButton(
+                    "Найти сервер в LAN",
+                    onClick = { scope.launch { viewModel.discoverServer { checkState = "lan" to it } } },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (checkState?.first == "lan") {
+                    Spacer(Modifier.height(8.dp))
+                    Text(checkState?.second.orEmpty(), style = MaterialTheme.typography.bodySmall, color = Champagne)
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
             SectionLabel("Распознавание текста (OCR)")
             GlassCard {
                 val modes = listOf("AUTO", "TESSERACT", "MLKIT", "AI")
